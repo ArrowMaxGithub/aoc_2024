@@ -6,5 +6,12 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+ahash = "0.8.11"
 aoc-runner = "0.3.0"
 aoc-runner-derive = "0.3.0"
+itertools = "0.13.0"
+radsort = "0.1.1"
+
+[profile.bench]
+codegen-units = 1
+lto = "fat"
