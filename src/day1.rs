@@ -1,4 +1,6 @@
-use aoc_runner_derive::{aoc, aoc_generator};
+use std::str::FromStr;
+
+use aoc_runner_derive::aoc;
 
 pub type Line = (u32, u32);
 
@@ -20,18 +22,23 @@ impl FromIterator<Line> for Input {
     }
 }
 
-#[aoc_generator(day1)]
-pub fn generator(text: &str) -> Input {
-    Input::from_iter(text.lines().map(|line| {
-        let mut segments = line
-            .split_whitespace()
-            .map(|segment| segment.parse().unwrap());
-        (segments.next().unwrap(), segments.next().unwrap())
-    }))
+impl FromStr for Input {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let parsed_lines = s.lines().map(|line| {
+            let mut segments = line.split_whitespace().map(|seg| seg.parse().unwrap());
+            (segments.next().unwrap(), segments.next().unwrap())
+        });
+
+        Ok(Self::from_iter(parsed_lines))
+    }
 }
 
 #[aoc(day1, part1)]
-pub fn solve_part1(input: &Input) -> u32 {
+pub fn part1(text: &str) -> u32 {
+    let input: Input = text.parse().unwrap();
+
     input
         .left_column
         .iter()
@@ -40,7 +47,9 @@ pub fn solve_part1(input: &Input) -> u32 {
 }
 
 #[aoc(day1, part2)]
-pub fn solve_part2(input: &Input) -> u32 {
+pub fn part2(text: &str) -> u32 {
+    let input: Input = text.parse().unwrap();
+
     input.left_column.iter().fold(0, |acc, left| {
         acc + input
             .right_column
