@@ -1,4 +1,3 @@
-use ahash::AHashMap;
 use std::str::FromStr;
 
 use aoc_runner_derive::aoc;
