@@ -1,6 +1,6 @@
 pub fn parse_fast_whitespeace_separated<const L: usize, const N: usize>(
     input: &[u8],
-) -> [[u8; L]; N] {
+) -> [[i32; L]; N] {
     let mut result = [[0; L]; N];
 
     let mut n = N - 1;
