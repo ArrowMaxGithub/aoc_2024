@@ -1,42 +1,82 @@
-use std::collections::BinaryHeap;
+use std::str::FromStr;
 
 use aoc_runner_derive::aoc;
 
-use crate::util::parse_fast_whitespeace_separated;
+#[cfg(test)]
+const N: usize = 6;
+#[cfg(not(test))]
+const N: usize = 1000;
 
-pub type Line = Vec<i8>;
+// pub type Line = [i8; 8];
 pub type Answer = usize;
 
+pub struct Input {
+    flat_reports: [i8; N * 8],
+}
+
+impl FromStr for Input {
+    type Err = !;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut i = 0;
+        let mut flat_reports = [0; N * 8];
+
+        unsafe {
+            s.lines().for_each(|line| {
+                let segments = line
+                    .split_ascii_whitespace()
+                    .map(|seg| seg.parse::<i8>().unwrap_unchecked());
+
+                flat_reports[i..i + 8]
+                    .iter_mut()
+                    .zip(segments)
+                    .for_each(|(level, seg)| {
+                        *level = seg;
+                    });
+
+                i += 8;
+            })
+        };
+
+        Ok(Self { flat_reports })
+    }
+}
+
 #[aoc(day2, part1)]
-pub fn part1(input: &[u8]) -> Answer {
-    let reports = parse_fast_whitespeace_separated::<8, 1000>(input);
+pub fn part1(text: &str) -> Answer {
+    let input: Input = unsafe { text.parse().unwrap_unchecked() };
 
-    let unsafe_reports = reports
-        .iter()
-        .filter(|report| is_report_unsafe(report));
+    let unsafe_reports = input
+        .flat_reports
+        .array_chunks()
+        .into_iter()
+        .filter(|report| is_report_unsafe(**report));
 
-    1000 - unsafe_reports.count()
+    N - unsafe_reports.count()
 }
 
 #[aoc(day2, part2)]
-pub fn part2(input: &[u8]) -> Answer {
-    let reports = parse_fast_whitespeace_separated::<8, 1000>(input);
+pub fn part2(text: &str) -> Answer {
+    let input: Input = unsafe { text.parse().unwrap_unchecked() };
 
-    let inital_failed = reports
+    let inital_failed = input
+        .flat_reports
+        .array_chunks()
         .into_iter()
-        .filter(|report| is_report_unsafe(report));
-    
-    let unsafe_reports = inital_failed.filter(|report| bruteforce_retest_is_report_unsafe(report));
+        .filter(|report| is_report_unsafe(**report));
 
-    1000 - unsafe_reports.count()
+    let unsafe_reports =
+        inital_failed.filter(|report| bruteforce_retest_is_report_unsafe(**report));
+
+    N - unsafe_reports.count()
 }
 
-fn bruteforce_retest_is_report_unsafe(report: &[i32; 8]) -> bool {
-    for i in 0..report.len() {
+fn bruteforce_retest_is_report_unsafe(report: [i8; 8]) -> bool {
+    for i in 0..8 {
         let mut cloned_report = report.clone();
         cloned_report[i] = 0;
 
-        if !is_report_unsafe(&cloned_report) {
+        if !is_report_unsafe(cloned_report) {
             return false;
         }
     }
@@ -44,14 +84,13 @@ fn bruteforce_retest_is_report_unsafe(report: &[i32; 8]) -> bool {
     true
 }
 
-fn is_report_unsafe(report: &[i32; 8]) -> bool {
+fn is_report_unsafe(report: [i8; 8]) -> bool {
     let mut initial_dir = None;
     let mut previous = None;
-    let mut mad = BinaryHeap::with_capacity(8); // MaxAdjacentDifference, MAD
 
-    for level in report{
+    for level in report {
         // skip any 0s in the parsed report
-        if *level == 0 {
+        if level == 0 {
             continue;
         }
 
@@ -63,10 +102,12 @@ fn is_report_unsafe(report: &[i32; 8]) -> bool {
 
         previous = Some(level);
 
-        let diff = level - *compare;
-        let dir = diff.signum();
+        let diff = level - compare;
+        if diff.abs() > 3 {
+            return true;
+        }
 
-        mad.push(diff.abs());
+        let dir = diff.signum();
 
         // if this is the second non-zero level, set the inital direction
         let Some(initial_dir) = initial_dir else {
@@ -80,24 +121,30 @@ fn is_report_unsafe(report: &[i32; 8]) -> bool {
         }
     }
 
-    // the report is either steadily increasing or decreasing, but it may still contain excessive MAD
-    let mad_max = mad.pop().unwrap();
-    mad_max > 3
+    false // no early returns => this report is safe
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
+    const TEST_DATA: &str = r"7 6 4 2 1
+1 2 7 8 9
+9 7 6 2 1
+1 3 2 4 5
+8 6 4 4 1
+1 3 6 7 9
+";
+
     #[test]
     fn test_part1() {
-        let result = part1(include_bytes!("../input/2024/day2.txt"));
-        assert_eq!(result, 479);
+        let result = part1(TEST_DATA);
+        assert_eq!(result, 2);
     }
 
     #[test]
     fn test_part2() {
-        let result = part2(include_bytes!("../input/2024/day2.txt"));
-        assert_eq!(result, 531);
+        let result = part2(TEST_DATA);
+        assert_eq!(result, 4);
     }
 }
