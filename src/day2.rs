@@ -84,7 +84,6 @@ fn bruteforce_retest_is_report_unsafe(report: [i8; 8]) -> bool {
     true
 }
 
-
 fn is_report_unsafe(report: [i8; 8]) -> bool {
     let mut initial_dir = None;
     let mut previous = None;
@@ -129,7 +128,6 @@ fn is_report_unsafe(report: [i8; 8]) -> bool {
 mod tests {
     use super::*;
 
-
     const TEST_DATA: &str = r"7 6 4 2 1
 1 2 7 8 9
 9 7 6 2 1
@@ -138,7 +136,7 @@ mod tests {
 1 3 6 7 9
 
 ";
-  
+
     #[test]
     fn test_part1() {
         let result = part1(TEST_DATA);

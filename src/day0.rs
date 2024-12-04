@@ -31,11 +31,30 @@ impl FromStr for Input {
 #[aoc(day1, part1)]
 pub fn part1(text: &str) -> Answer {
     let mut input: Input = unsafe { text.parse().unwrap_unchecked() };
-
+    todo!()
 }
 
 #[aoc(day1, part2)]
 pub fn part2(text: &str) -> Answer {
     let input: Input = unsafe { text.parse().unwrap_unchecked() };
+    todo!()
+}
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    
+    const TEST_DATA: &str = r#""#;
+
+    #[test]
+    fn test_part1(){
+        let result = part1(TEST_DATA);
+        assert_eq!(result, 42);
+    }
+
+    #[test]
+    fn test_part2(){
+        let result = part2(TEST_DATA);
+        assert_eq!(result, 42);
+    }
 }
