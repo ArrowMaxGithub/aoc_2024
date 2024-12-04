@@ -49,7 +49,6 @@ pub fn part1(text: &str) -> Answer {
     let unsafe_reports = input
         .flat_reports
         .array_chunks()
-        .into_iter()
         .filter(|report| is_report_unsafe(**report));
 
     N - unsafe_reports.count()
@@ -62,7 +61,6 @@ pub fn part2(text: &str) -> Answer {
     let inital_failed = input
         .flat_reports
         .array_chunks()
-        .into_iter()
         .filter(|report| is_report_unsafe(**report));
 
     let unsafe_reports =
@@ -73,7 +71,7 @@ pub fn part2(text: &str) -> Answer {
 
 fn bruteforce_retest_is_report_unsafe(report: [i8; 8]) -> bool {
     for i in 0..8 {
-        let mut cloned_report = report.clone();
+        let mut cloned_report = report;
         cloned_report[i] = 0;
 
         if !is_report_unsafe(cloned_report) {
