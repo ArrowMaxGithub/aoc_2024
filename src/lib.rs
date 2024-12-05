@@ -3,6 +3,8 @@
 #![feature(never_type)]
 #![feature(iter_array_chunks)]
 #![feature(iter_map_windows)]
+#![feature(get_many_mut)]
+#![feature(portable_simd)]
 
 use aoc_runner_derive::aoc_lib;
 

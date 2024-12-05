@@ -1,3 +1,5 @@
+use std::simd::u8x4;
+
 use aoc_runner_derive::aoc;
 
 pub type Line = Vec<char>;
@@ -8,81 +10,20 @@ const WIDTH: usize = 10;
 #[cfg(not(test))]
 const WIDTH: usize = 140;
 
-#[derive(Clone, Copy)]
-enum Search {
-    Initial,
-    // F == Forward
-    // R == Reverse
-    MF,
-    AF,
-    SF,
-    XR,
-    MR,
-    AR,
-}
+const XMAS: u8x4 = u8x4::from_array([b'X', b'M', b'A', b'S']);
+const SMAX: u8x4 = u8x4::from_array([b'S', b'A', b'M', b'X']);
 
-impl Search {
-    #[inline]
-    pub const fn nom_part_one(&mut self, byte: u8) -> usize {
-        match (&self, byte) {
-            (Search::Initial, b'X') => {
-                *self = Search::MF;
-                0
-            }
-            (Search::MF, b'M') => {
-                *self = Search::AF;
-                0
-            }
-            (Search::AF, b'A') => {
-                *self = Search::SF;
-                0
-            }
-            (Search::SF, b'S') => {
-                *self = Search::AR; // we could match xma-s-amx in one go
-                1
-            }
-
-            (Search::Initial, b'S') => {
-                *self = Search::AR;
-                0
-            }
-            (Search::AR, b'A') => {
-                *self = Search::MR;
-                0
-            }
-            (Search::MR, b'M') => {
-                *self = Search::XR;
-                0
-            }
-            (Search::XR, b'X') => {
-                *self = Search::MF; // we could match sam-x-mas in one go
-                1
-            }
-
-            (_, b'X') => {
-                *self = Search::MF;
-                0
-            }
-
-            (_, b'S') => {
-                *self = Search::AR;
-                0
-            }
-
-            _ => {
-                *self = Search::Initial;
-                0
-            }
-        }
-    }
+#[inline(always)]
+fn search1(bytes: u8x4) -> usize {
+    (bytes == XMAS || bytes == SMAX) as usize
 }
 
 #[aoc(day4, part1)]
 pub fn part1(ínput: &[u8]) -> Answer {
-    let mut mode_horizontal = Search::Initial;
-    let mut modes_vertical = [Search::Initial; WIDTH];
-    let mut diagonal_l = [Search::Initial; WIDTH];
-    let mut diagonal_r = [Search::Initial; WIDTH];
+    let mut horizontal = u8x4::from_array([0; 4]);
+    let mut vertical = [u8x4::from_array([0; 4]); WIDTH];
+    let mut diagonal_l = [u8x4::from_array([0; 4]); WIDTH];
+    let mut diagonal_r = [u8x4::from_array([0; 4]); WIDTH];
 
     let mut result = 0;
     ínput
@@ -90,17 +31,27 @@ pub fn part1(ínput: &[u8]) -> Answer {
         .filter(|b| **b != 0x0A)
         .array_chunks::<WIDTH>()
         .for_each(|chunk| {
-            mode_horizontal = Search::Initial; // avoid matching across line breaks
+            horizontal = u8x4::from_array([0; 4]); // avoid matching across line breaks
 
-            for (i, c) in chunk.into_iter().enumerate() {
-                result += mode_horizontal.nom_part_one(*c);
-                result += modes_vertical[i].nom_part_one(*c);
-                result += diagonal_l[i].nom_part_one(*c);
-                result += diagonal_r[i].nom_part_one(*c);
+            for (i, c) in chunk.into_iter().copied().enumerate() {
+                horizontal = horizontal.rotate_elements_right::<1>();
+                vertical[i] = vertical[i].rotate_elements_right::<1>();
+                diagonal_l[i] = diagonal_l[i].rotate_elements_right::<1>();
+                diagonal_r[i] = diagonal_r[i].rotate_elements_right::<1>();
+
+                horizontal[0] = c;
+                vertical[i][0] = c;
+                diagonal_l[i][0] = c;
+                diagonal_r[i][0] = c;
+
+                result += search1(horizontal);
+                result += search1(vertical[i]);
+                result += search1(diagonal_l[i]);
+                result += search1(diagonal_r[i]);
             }
 
-            diagonal_l[WIDTH - 1] = Search::Initial; // avoid matching across line breaks
-            diagonal_r[0] = Search::Initial; // avoid matching across line breaks
+            diagonal_l[WIDTH - 1] = u8x4::from_array([0; 4]); // avoid matching across line breaks
+            diagonal_r[0] = u8x4::from_array([0; 4]); // avoid matching across line breaks
 
             diagonal_l.rotate_right(1); // next match will be one to the right
             diagonal_r.rotate_left(1); // next match will be one to the left
@@ -110,26 +61,28 @@ pub fn part1(ínput: &[u8]) -> Answer {
 }
 
 #[aoc(day4, part2)]
-pub fn part2(ínput: &[u8]) -> Answer {
-    let input: Vec<u8> = ínput.iter().copied().filter(|b| *b != 0x0A).collect();
+pub fn part2(input: &[u8]) -> Answer {
+    let mut input: Vec<u8> = input.iter().copied().filter(|b| *b != 0x0A).collect();
 
     let mut result = 0;
     for y in 1..WIDTH - 1 {
         for x in 1..WIDTH - 1 {
-            let center = input[y * WIDTH + x];
-            if center != b'A' {
+            if unsafe { *input.get_unchecked(y * WIDTH + x) } != b'A' {
                 continue;
             }
 
-            let c_top_left = input[(y - 1) * WIDTH + (x - 1)];
-            let c_top_right = input[(y - 1) * WIDTH + (x + 1)];
-            let c_bot_left = input[(y + 1) * WIDTH + (x - 1)];
-            let c_bot_right = input[(y + 1) * WIDTH + (x + 1)];
+            let chars = unsafe {
+                input.get_many_unchecked_mut([
+                    (y + 1) * WIDTH + (x - 1),
+                    (y + 1) * WIDTH + (x + 1),
+                    (y - 1) * WIDTH + (x - 1),
+                    (y - 1) * WIDTH + (x + 1),
+                ])
+            };
 
-            if (c_top_left == b'M' && c_bot_right == b'S'
-                || c_top_left == b'S' && c_bot_right == b'M')
-                && (c_top_right == b'M' && c_bot_left == b'S'
-                    || c_top_right == b'S' && c_bot_left == b'M')
+            if (*chars[0] == b'M' && *chars[3] == b'S' || *chars[0] == b'S' && *chars[3] == b'M')
+                && (*chars[1] == b'M' && *chars[2] == b'S'
+                    || *chars[1] == b'S' && *chars[2] == b'M')
             {
                 result += 1;
             }
