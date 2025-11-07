@@ -48,8 +48,9 @@ pub fn part1(text: &str) -> Answer {
 
     let unsafe_reports = input
         .flat_reports
+        .into_iter()
         .array_chunks()
-        .filter(|report| is_report_unsafe(**report));
+        .filter(|report| is_report_unsafe(*report));
 
     N - unsafe_reports.count()
 }
@@ -60,11 +61,12 @@ pub fn part2(text: &str) -> Answer {
 
     let inital_failed = input
         .flat_reports
+        .into_iter()
         .array_chunks()
-        .filter(|report| is_report_unsafe(**report));
+        .filter(|report| is_report_unsafe(*report));
 
     let unsafe_reports =
-        inital_failed.filter(|report| bruteforce_retest_is_report_unsafe(**report));
+        inital_failed.filter(|report| bruteforce_retest_is_report_unsafe(*report));
 
     N - unsafe_reports.count()
 }

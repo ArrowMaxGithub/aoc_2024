@@ -1,9 +1,6 @@
-#![feature(let_chains)]
-#![feature(array_chunks)]
 #![feature(never_type)]
 #![feature(iter_array_chunks)]
 #![feature(iter_map_windows)]
-#![feature(get_many_mut)]
 #![feature(portable_simd)]
 
 use aoc_runner_derive::aoc_lib;
@@ -11,5 +8,6 @@ use aoc_runner_derive::aoc_lib;
 pub mod day1;
 pub mod day2;
 pub mod day4;
+pub mod day5;
 
 aoc_lib! { year = 2024 }

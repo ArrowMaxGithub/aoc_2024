@@ -72,12 +72,12 @@ pub fn part2(input: &[u8]) -> Answer {
             }
 
             let chars = unsafe {
-                input.get_many_unchecked_mut([
+                input.get_disjoint_mut([
                     (y + 1) * WIDTH + (x - 1),
                     (y + 1) * WIDTH + (x + 1),
                     (y - 1) * WIDTH + (x - 1),
                     (y - 1) * WIDTH + (x + 1),
-                ])
+                ]).unwrap_unchecked()
             };
 
             if (*chars[0] == b'M' && *chars[3] == b'S' || *chars[0] == b'S' && *chars[3] == b'M')
